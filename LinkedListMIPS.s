@@ -1,6 +1,6 @@
 # Soul of the Machine - Fall 2013 - Programming Assignment 2
 #
-# <your name here>
+# Mick Kellog/Julian Sharifi
 #
 
 
