@@ -1,6 +1,6 @@
 # Soul of the Machine - Fall 2013 - Programming Assignment 2
 #
-# <your name here>
+# Mick Kellog/Julian Sharifi
 #
 
 
@@ -292,6 +292,12 @@ print_newline:
 
 # print_string: displays supplied string (in $a0) to standard output
 print_string:
+<<<<<<< HEAD
 	li   	$v0, 4
 			syscall  
 	jr 		$ra
+=======
+	li   $v0, 4
+	syscall  
+	jr $ra
+>>>>>>> 7189f73ab24f4a826e92943f33c36efd71e007d2
