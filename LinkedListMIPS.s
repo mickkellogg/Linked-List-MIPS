@@ -136,6 +136,7 @@ strloop:
 replace:        
         add                $t2, $t2, $zero                 #$t2 is set to zero, ASCII value for null terminator
         sb $t2, 0($a0)                         #$t2 is stored into the byte starting at $a0
+        lb $t1, 0($a0)                                #test byte to make sure it was changed
         jr                $ra                                         #jump back to caller
 
 # strlen: given string stored at address in $a0
@@ -210,15 +211,17 @@ insert_here:
 # inserts new linked-list node in appropriate place in list
 # ...
 # returns address of new front of list in $v0 (which may be same as old)
+# Julian: When we load a word (4 bytes) from a0, I'm getting an error i think because they'res only one byte there (the zero from the null).
+# I've changed them all to LB's instead, but i'm not sure that's right. I'm still getting errors. See what you think?
 insert:
         addi $sp, $sp, 4                         #add space on the stack
         sw                 $ra, 0($sp)                                #store jump register onto the stack
-        lw $t9, 0($a0)                                #load head of the list for later use
-        lw                 $t0, 0($a0)                                #load head of list into $t0
+        lb $t9, 0($a0)                                #load head of the list for later use
+        lb                 $t0, 0($a0)                                #load head of list into $t0
         andi $t0, $t0, 240                        #bitwise and with 240 (1111 0000) to extract first 4 bits for pointer to string
-        sw                 $t0, 0($a0)                                #store $t0 into $a0 for strcmp call
+        sb                 $t0, 0($a0)                                #store $t0 into $a0 for strcmp call
         lb                 $t6, 0($t0)                         #get the byte of the first string char in the list
-        lw $t7, 0($a1)                                #get address of string
+        lb $t7, 0($a1)                                #get address of string
         lb                 $t1, 0($t7)                                #get the byte of the first char of the string
         addi         $t3, $zero, 1                        #$t3 gets 1
         addi         $t4, $zero, -1                         #$t3 gets -1
