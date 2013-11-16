@@ -109,7 +109,8 @@ read_string:
 	sw   	$ra, 0($sp)				#push the jump register onto the stack
 	sw   	$s0, 4($sp)				#push the head of the list onto the stack
 	add  	$t0, $t0, $zero    		#$t0 gets 0  
-    la   	$a0, MAX_STR_LEN  		#$a0 gets MAX_STR_LEN
+    la   	$t1, MAX_STR_LEN  		#$a0 gets MAX_STR_LEN
+    lw      $a0, 0($t1)				#move MAX_STR_LEN from $t1 into $a0 
     jal  	malloc		 			#jump to malloc to allocate space for string
     move 	$a0, $v0				#move pointer to allocated memory to $a0
     add  	$t1, $t1, $zero 		#get zero
@@ -139,7 +140,7 @@ replace:
 # strlen: given string stored at address in $a0
 # returns its length in $v0
 strlen: 
-	add 	$t0, $t0, $zer0			#$t0 gets zero
+	add 	$t0, $t0, $zero			#$t0 gets zero
 lenloop:	
 	lb 		$t1, 0($a0)				#get the first byte for first char in $a0
 	beq		$t1, $zero, exitline	#if $t1 == 0 (null terminator), jump to exit
@@ -190,11 +191,10 @@ insert_here:
 	move 	$t3, $v0 				#get address of new memory from $v0 and move to $t3
 	sw      $t1, 0($t3) 			#store the string pointer into bytes 0-3 of the new memory
 	sw 		$t0, 4($t3)				#store the pointer to the original front of the list 
-	sw		$t3, 0($s0)				#store 
-	sw      $t4, 4($s0)
-	lw 		$ra, 0($sp)
-	addi	$sp, $sp, -4
-	jr 		$ra
+	sw		$t3, 0($s0)				#store the new node into $s0
+	lw 		$ra, 0($sp)             #pop the register to jump back to off the stack 
+	addi	$sp, $sp, 4				#add to the stack
+	jr 		$ra 					#jump back to caller
 
 
 
@@ -209,38 +209,47 @@ insert_here:
 # ...
 # returns address of new front of list in $v0 (which may be same as old)
 insert: 
-	lw	  	$t0, 0($a0) 		#get the address of front of the list
-	lw	  	$t1, 0($a1) 
-	addi  	$t3, $zero, 1	
-	addi  	$t4, $zero, -1 		#get the string address out of $a1
-alphloop:	
-	slt   	$t2, $t1, $t0   
-	beq   	$t2, $t3, put
-	beq   	$t2, $zero, nextchar
-	sw 	  	$t1, 0($a0)
-	sw 	  	$t0, 0($a1)
-	jal   	strcmp
-	move  	$v0, $
-	addi  	$t0, $t0, 8
-	j 	  	alphloop	
-nextchar: 	
-	addi	$t0, $t0, 4
-    addi  	$t1, $t1, 4
-    j 		alphloop
+	addi    $sp, $sp, 4 			#add space on the stack
+	sw 		$ra, 0($sp)				#store jump register onto the stack 
+	lw      $t9, 0($a0)				#load head of the list for later use
+	lw 		$t0, 0($a0)				#load head of list into $t0
+	andi    $t0, $t0, 240			#bitwise and with 240 (1111 0000) to extract first 4 bits for pointer to string
+	sw 		$t0, 0($a0)				#store $t0 into $a0 for strcmp call
+	lb	  	$t6, 0($t0) 			#get the byte of the first string char in the list
+	lw      $t7, 0($a1)				#get address of string 
+	lb	  	$t1, 0($t7)				#get the byte of the first char of the string
+	addi  	$t3, $zero, 1			#$t3 gets 1
+	addi  	$t4, $zero, -1 			#$t3 gets -1
+alphloop:							#be careful in this function may have a bug with front of the list 
+#	slt   	$t2, $t1, $t0   		#if $t1 < $t0, then $t2 = 1, else $t2 = 0 
+#	beq   	$t2, $t3, put 			#if 
+#	beq   	$t2, $zero, nextchar
+	jal     strcmp 					#compare the strings in $a0 and $a1 
+	move    $t5, $v0 				#move the value returned from strcmp into $t5
+	beq		$t5, $t4, put			#if $t5 = -1, then value is less and then put new string at head of list
+	beq		$t5, $t3, nextstring    #if $t5 = 1, then the head of the list is larger than the string and go to next string
+	beq     $t5, $zero, close 		#check if it is zero, if so it is already in the list so step out 
+nextstring:
+	lw      $t2, 0($a0)				#store pointer to next node in $t2
+	andi    $t8, $t9, 15 			#get address of next node string
+	beq     $t8, $zero, put         #if it points to null then add node at the end
+    sw      $t8, 0($a0)				#store into $a0 
+    j       alphloop				#check against the next string in loop
 put: 	
-    li    	$t5, 8   
-	move  	$a0, $t5
-	jal   	malloc	
-	move  	$t5, $v0
-	sw    	$t1, 0($t5)
-	sw 		$t0, 4($t5)
-	addi  	$t0, $t0, -12
-	lw    	$t6, 8($t0)
-	bne   	$t0, $t6, close
-	sw    	$t5, 0($t0) #we forgot to put an offset here 
+    li    	$t5, 8   				#$t5 gets 8 
+	move  	$a0, $t5				#$t5 moved into $a0 
+	jal   	malloc					#allocate size for node 
+	move  	$t5, $v0				#move address returned by malloc to $t5
+	sw    	$a1, 0($t5)				#store $a1 into address allocated
+	beq     $t2, $zero, front       #node is at front of the list, so there is no need to update pointer
+	sw 		$t2, 4($t5)				#store pointer to current node into new node
+	addi  	$t0, $a0, -8			#subtract from the current node back one 
+	sw      $t5, 0($t0)				#store new pointer into the node
 	jr 		$ra
+front: 
+	sw      $t5, 0($s0)				#make global reference to front of the node the new node if its at the front
 close:    
-	jr   	$ra
+	jr   	$ra 					#jump back 
 
 
 # print_list: given address of front of list in $a0
@@ -292,12 +301,6 @@ print_newline:
 
 # print_string: displays supplied string (in $a0) to standard output
 print_string:
-<<<<<<< HEAD
 	li   	$v0, 4
 			syscall  
 	jr 		$ra
-=======
-	li   $v0, 4
-	syscall  
-	jr $ra
->>>>>>> 7189f73ab24f4a826e92943f33c36efd71e007d2
