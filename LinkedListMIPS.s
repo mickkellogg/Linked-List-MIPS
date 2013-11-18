@@ -64,6 +64,7 @@ Loop_main:
         jal        print_string
         jal        read_string
         move       $s1, $v0
+       # lw		   $a0, 0($s1)
         jal        trim
         jal        strlen
         addi       $t0, $zero, 2
@@ -105,7 +106,8 @@ Exit_loop_main:
 # and then reads a string from standard input into that memory address
 # and returns the address in $v0
 read_string:
-    	addi       $sp, $sp, -8                     #allocate space for 2 items on the stack     sw         $ra, 0($sp)                                #push the jump register onto the stack
+    	addi       $sp, $sp, -8                     #allocate space for 2 items on the stack    
+        sw         $ra, 0($sp)                      #push the jump register onto the stack
     	sw         $s0, 4($sp)                      #push the head of the list onto the stack
     	add        $t0, $t0, $zero                  #$t0 gets 0
     	la         $t1, MAX_STR_LEN                 #$a0 gets MAX_STR_LEN
@@ -171,7 +173,8 @@ strcmp:
         j      end
 lessthan:
         addi   $t4, $t4, -1                        #$t4 gets -1
-        sw     $t4, 0($v0)                         #$v0 gets -1
+        #sw     $t4, 0($v0)                         #$v0 gets -1
+        move   $v0, $t4 
         j      end                                 #jump to end
 greaterthan:
         addi   $t4, $t4, 1                         #$t4 gets 1
@@ -195,7 +198,8 @@ insert_here:
         move   $t3, $v0                            #get address of new memory from $v0 and move to $t3
         sw 	   $t1, 0($t3)                         #store the string pointer into bits 0-7 of the new memory
         sw     $t0, 8($t3)                         #store the pointer to the original front of the list
-        sw     $t3, 0($s0)                         #store the new node into $s0
+        #sw     $t3, 0($s0)                         #store the new node into $s0
+        # ^^ I think this is supposed to be done in main
         lw     $ra, 0($sp) 						   #pop the register to jump back to off the stack
         addi   $sp, $sp, -4                        #pop the stack
         jr     $ra                                 #jump back to caller
@@ -219,11 +223,11 @@ insert:
         sw   	$ra, 0($sp)                         #store jump register onto the stack
         lb 		$t9, 0($a0)                         #load head of the list for later use
         lb      $t0, 0($a0)                         #load head of list into $t0
-        andi 	$t0, $t0, 240                       #bitwise and with 240 (1111 0000) to extract first 4 bits for pointer to string
+      #  andi 	$t0, $t0, 240                       #bitwise and with 240 (1111 0000) to extract first 4 bits for pointer to string
         sb      $t0, 0($a0)                         #store $t0 into $a0 for strcmp call
-        lb      $t6, 0($t0)                         #get the byte of the first string char in the list
+      #  lb      $t6, 0($t0)                         #get the byte of the first string char in the list
         lb 		$t7, 0($a1)                         #get address of string
-        lb      $t1, 0($t7)                         #get the byte of the first char of the string
+       # lb      $t1, 0($t7)                         #get the byte of the first char of the string
         addi    $t3, $zero, 1                       #$t3 gets 1
         addi    $t4, $zero, -1                      #$t3 gets -1
 alphloop:                                           #be careful in this function may have a bug with front of the list
@@ -236,10 +240,11 @@ alphloop:                                           #be careful in this function
         beq     $t5, $t3, nextstring                #if $t5 = 1, then the head of the list is larger than the string and go to next string
         beq 	$t5, $zero, close                   #check if it is zero, if so it is already in the list so step out
 nextstring:
-        lw 		$t2, 0($a0)                         #store pointer to next node in $t2
-        andi 	$t8, $t9, 15                        #get address of next node string
-        beq 	$t8, $zero, put 					#if it points to null then add node at the end
-   		sw 		$t8, 0($a0)                         #store into $a0
+        lw 		$t2, 8($a0)                         #store pointer to next node in $t2
+        lb      $t6, 0($a0)							#keep address of last node for later
+        beq 	$t2, $zero, put 					#if it points to null then add node at the end
+   		sw 		$t2, 0($a0)                         #store into $a0
+   		addi    $t1, $t1, 1  						#increment each time through loop to see if node is at front
         j 		alphloop                            #check against the next string in loop
 put:         
     	li      $t5, 16                             #$t5 gets 16
@@ -247,18 +252,25 @@ put:
         jal     malloc                              #allocate size for node
         move    $t5, $v0                            #move address returned by malloc to $t5
         sw      $a1, 0($t5)                         #store $a1 into address allocated
-        beq     $t2, $zero, front 					#node is at front of the list, so there is no need to update pointer
+        beq     $t1, $zero, front 					#node is at front of the list, so there is no need to update pointer
         sw      $t2, 8($t5)                         #store pointer to current node into new node
-        addi    $t0, $a0, -8                        #subtract from the current node back one
-        sw 		$t5, 0($t0)                         #store new pointer into the node
+        #addi    $t0, $a0, -8                        #subtract from the current node back one
+        sb 		$t5, 8($t6)                         #store new pointer into the node
         lw 		$ra, 0($sp)							#get jump address
         addi    $sp, $sp, -4						#pop the stack
+        move    $v0, $t9							#move head of the list to $v0
         jr      $ra
 front:
         sw 		$t5, 0($s0)                         #make global reference to front of the node the new node if its at the front
+        move    $v0, $t5							#t5 into $v0 
+        lw		$ra, 0($sp)
+        addi    $sp, $sp, -4
+        jr      $ra
+# *MICK* dont think this is right either...dont know why I did it. 
 close:
         lw		$ra, 0($sp)							#get $ra back 
         addi    $sp, $sp, -4						#pop the stack 
+        move    $v0, $t9							#move $t9 to $v0 
         jr      $ra                                 #jump back
 
 
