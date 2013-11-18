@@ -106,11 +106,11 @@ Exit_loop_main:
 # and then reads a string from standard input into that memory address
 # and returns the address in $v0
 read_string:
-    	addi       $sp, $sp, -8                     #allocate space for 2 items on the stack    
-        sw         $ra, 0($sp)                      #push the jump register onto the stack
-    	sw         $s0, 4($sp)                      #push the head of the list onto the stack
-    	add        $t0, $t0, $zero                  #$t0 gets 0
-    	la         $t1, MAX_STR_LEN                 #$a0 gets MAX_STR_LEN
+    	addi       $sp, $sp, -8                     #allocate space for 2 items on the stack
+        sw         $s0, 0($sp)                      #push the head of the list onto the stack
+        add        $t0, $t0, $zero                  #$t0 gets 0
+        la         $t1, MAX_STR_LEN                 #$a0 gets MAX_STR_LEN
+        sw         $ra, 4($sp)                      #push the jump register onto the stack                   
     	lw 		   $a0, 0($t1)                      #move MAX_STR_LEN from $t1 into $a0
     	jal        malloc                           #jump to malloc to allocate space for string
     	move       $a0, $v0                         #move pointer to allocated memory to $a0
@@ -228,7 +228,7 @@ insert:
         addi    $t3, $zero, -1          #$t2 gets -1
 
 alphloop: 
-		addi    $sp, $sp, 4				#add to stack
+		addi    $sp, $sp, -4				#add to stack
 		sw      $a0, 0($sp)				#store $a0 onto the stack
 		la		$a0, 0($t0)				#address of string 
         jal     strcmp                  #compare the strings
@@ -237,19 +237,19 @@ alphloop:
         beq     $v0, $t2, put
 nextString:
 		lw 		$a0, 0($sp)				#pop a0 off stack
-		addi    $sp, $sp, -4			#deallocate
+		addi    $sp, $sp, 4 			#deallocate
         move    $a0, $t2                #get address of next node
         addi    $t2, $a0, 4
         addi    $t4, $t4, 1             #increment t4 to see if not front of list
         j       alphloop
 put: 
-        addi    $sp, $sp, 4             #add to the stack
+        addi    $sp, $sp, -4             #add to the stack
         sw      $a0, 0($sp)             #store $a0 onto the stack
         li      $t5, 8                  #load 8 into $t5
         move    $a0, $t5                #move into $a0
         jal     malloc                  #allocate 1 byte for node
         lw      $a0, 0($sp)             #load $a0 off the stack
-        addi    $sp, $sp, -4            #deallocate memory on stack
+        addi    $sp, $sp, 4            #deallocate memory on stack
         la      $t5, 0($v0)             #move new memory byte to $t5
         sw      $a1, 0($t5)             #store the address of the string into $t5
        # lw      $t6, 4($a0)            #get pointer from $a0
@@ -258,14 +258,14 @@ put:
         addi    $a0, $a0, -12           #go back -12 to get the pointer to the next string
         sw      $v0, 0($a0)             #store the memory pointer into the parent node's pointer
         la      $v0, 0($t0)             #get the front of the list
-        lw 		$a0, 0($sp)
-        lw      $ra, 4($sp)             #get jump reg
-        addi    $sp, $sp, -8            #deallocate the stack
+        lw 		$a0, 4($sp)
+        lw      $ra, 0($sp)             #get jump reg
+        addi    $sp, $sp, 8            #deallocate the stack
         jr      $ra
 close: 
 		lw 		$a0, 0($sp)				#pop a0 off stack
         lw      $ra, 4($sp)             #get $ra off stack
-        addi    $sp, $sp, -8            #deallocate
+        addi    $sp, $sp, 8             #deallocate
         jr      $ra 
 
 # print_list: given address of front of list in $a0
