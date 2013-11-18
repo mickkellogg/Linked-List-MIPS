@@ -2,6 +2,8 @@
 #
 # Mick Kellog/Julian Sharifi
 #
+# MICK: I've tried to add and UPDATE note in the functions I fucked with along with some notes (apple-f my name and they should pop up). 
+#
 
 
 ##################################################
