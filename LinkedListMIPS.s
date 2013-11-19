@@ -2,7 +2,7 @@
 #
 # Mick Kellog/Julian Sharifi
 #
-# MICK: I've tried to add  UPDATE notes to the functions I fucked with.  (or just apple-f name and they should pop up). 
+# MICK: I've tried to add  UPDATE notes to the functions I played with.  (or just apple-f name and they should pop up). 
 #
 
 
@@ -53,6 +53,20 @@ STR_ENTER: .asciiz "enter a string: "
 # until a string of length less than two is entered;
 # prints list in order when done
 #
+
+#MICK Commented out the code below to add in Mike's main
+
+# main:  la $a0, STR_ENTER
+#        jal print_string
+#        jal read_string
+#        move $s0, $v0
+       
+#        move $a0, $s0
+#        jal print_string
+        
+#        li $v0, 10
+#        syscall
+       
 main:        
 #        lines commented out - not needed in simulation:
 #        addi $sp, $sp, -12
@@ -69,6 +83,8 @@ Loop_main:
         jal        trim
         jal        strlen
         addi       $t0, $zero, 1 # Julian: Changed from two. We need to add an extra check for 0 below it as well (IF t0 < 2). 
+        slt        $t1, $v0, $t0                    #if less than 2 $t1 gets 0 
+        bne        $t1, $zero, Exit_loop_main       #if $t1 != 0 (then it is = 1) jump to exit
         beq        $v0, $t0, Exit_loop_main
         jal        strcmp
         jal        insert
@@ -99,7 +115,6 @@ Exit_loop_main:
     			   syscall
 
 
-
 ##################################################
 # String routines
 #
@@ -109,23 +124,29 @@ Exit_loop_main:
 # and returns the address in $v0
 # UPDATED
 read_string:
-    	addi       $sp, $sp, -8                     #allocate space for 2 items on the stack
-        sw         $s0, 0($sp)                      #push the head of the list onto the stack
-        add        $t0, $t0, $zero                  #$t0 gets 0
+    	addi       $sp, $sp, -4                     #allocate space for 1 items on the stack
+        #MICK changed immediate to -4 for only 1 space
+        sw         $ra, 0($sp)                      #push the jump register onto the stack               
+       # sw         $s0, 0($sp)                      #push the head of the list onto the stack
+        add        $t0, $zero, $zero                #$t0 gets 0
         la         $t1, MAX_STR_LEN                 #$a0 gets MAX_STR_LEN
-        sw         $ra, 0($sp)                      #push the jump register onto the stack    ! we were storing                
     	lw 		   $a0, 0($t1)                      #move MAX_STR_LEN from $t1 into $a0
-    	jal        malloc                           #jump to malloc to allocate space for string
+    	#MICk moved the lw up underneath la as Mike said
+        jal        malloc                           #jump to malloc to allocate space for string
     	move       $a0, $v0                         #move pointer to allocated memory to $a0
-    	add        $t1, $t1, $zero                  #get zero
-    	move       $a1, $t1                         #move zero to a1
+        la         $s1, 0($a0)                      #load the new address into reg
+    	#store the address into $s1
+        add        $t1, $zero, $zero                  #get zero
+    	#changed both of these add codes to make sure its zero
+        move       $a1, $t1                         #move zero to a1
     	la         $a1, MAX_STR_LEN                 #$a1 gets MAX_STR_LEN
     	jal        get_string                       #get the string into $v0
     	lw         $ra, 0($sp)                      #load the jump address
-    	lw         $s0, 4($sp)                      #load the head of the list
-    	addi       $sp, $sp, 8                      #push onto the stack space for 2 elements
-    	jr         $ra                              #jump back to caller function
-
+    	#lw         $s0, 4($sp)                      #load the head of the list
+    	addi       $sp, $sp, 4                      #push onto the stack space for 2 elements
+    	move       $v0, $s1                         #move new address into $v0 to return
+        #move from $s1 into $v0 to return
+        jr         $ra                              #jump back to caller function
 
 # trim: modifies string stored at address in $a0 so that
 # first occurrence of a newline is replaced by null terminator
@@ -274,10 +295,10 @@ print_list:
         addi    $sp, $sp, -8
         sw      $ra, 0($sp)
         sw      $s0, 4($sp)
-        move    $s0, $a0
-        beq     $s0, $zero, Exit_print_list
+       # move    $s0, $a0
+        beq     $a0, $zero, Exit_print_list
 Loop_print_list:
-        lw         $a0, 0($s0)
+      #  lw         $a0, 0($s0)
         jal        print_string
         jal        print_newline
         lw         $s0, 4($s0) # node = node->next
