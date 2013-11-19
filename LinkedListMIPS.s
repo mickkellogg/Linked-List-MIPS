@@ -66,7 +66,7 @@ STR_ENTER: .asciiz "enter a string: "
         
 #        li $v0, 10
 #        syscall
-       
+
 main:        
 #        lines commented out - not needed in simulation:
 #        addi $sp, $sp, -12
@@ -170,7 +170,7 @@ replace:
 # strlen: given string stored at address in $a0
 # returns its length in $v0 UPDATED. 
 strlen:
-        add      $t0, $zero, $s3                    #$t0 gets length of string that had been stored in s3
+        add    $t0, $zero, $s3                    #$t0 gets length of string that had been stored in s3
         add    $v0, $zero, $t0                     #store $t0 into $v0 to return lenght of string
         jr     $ra                                 #jump back to caller
         
@@ -243,7 +243,7 @@ insert:
         la      $t0, 0($a0)                #get the pointer to the string at the front of the list
         la      $t1, 0($a1)                #get the address of the string to insert
         addi    $t2, $t0, 4             #get the pointer to the next node in the list           #get address of string to compare to
-        addi    $sp, $sp, 4             #allocate on stack
+        addi    $sp, $sp, -4             #allocate on stack
         sw      $ra, 0($sp)             #store jump reg onto stack
         addi    $t2, $zero, 1           #$t2 gets 1
         addi    $t3, $zero, -1          #$t2 gets -1
@@ -270,7 +270,7 @@ put:
         move    $a0, $t5                #move into $a0
         jal     malloc                  #allocate 1 byte for node
         lw      $a0, 0($sp)             #load $a0 off the stack
-        addi    $sp, $sp, 4            #deallocate memory on stack
+        addi    $sp, $sp, 4             #deallocate memory on stack
         la      $t5, 0($v0)             #move new memory byte to $t5
         sw      $a1, 0($t5)             #store the address of the string into $t5
        # lw      $t6, 4($a0)            #get pointer from $a0
@@ -279,13 +279,13 @@ put:
         addi    $a0, $a0, -12           #go back -12 to get the pointer to the next string
         sw      $v0, 0($a0)             #store the memory pointer into the parent node's pointer
         la      $v0, 0($t0)             #get the front of the list
-        lw 		$a0, 4($sp)
+       # lw 		$a0, 4($sp)
         lw      $ra, 0($sp)             #get jump reg
         addi    $sp, $sp, 8            #deallocate the stack
         jr      $ra
 close: 
-		lw 		$a0, 0($sp)				#pop a0 off stack
-        lw      $ra, 4($sp)             #get $ra off stack
+		lw 		$a0, 4($sp)				#pop a0 off stack
+        lw      $ra, 0($sp)             #get $ra off stack
         addi    $sp, $sp, 8             #deallocate
         jr      $ra 
 
