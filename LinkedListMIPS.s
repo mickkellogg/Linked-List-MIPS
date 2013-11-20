@@ -241,10 +241,11 @@ insert_here:
 # I've changed them all to LB's instead, but i'm not sure that's right. I'm still getting errors. See what you think?
 insert: 
     la      $t0, 0($a0)         #get the address of the front of the list
+    beq     $a0, $zero, put     #if list is empty, put it at the front 
     la      $t1, 0($a1)         #get the address of the string to insert
-    lb      $t2, 0($a0)         #get the byte at address in $a0
-    lw      $t3, 0($a0)         #get the 4 bits associated with string in the node
-    lw      $t4, 4($a0)         #get the next 4 bits associated with pointer to the next node
+    lb      $t2, 0($t0)         #get the byte at address in $a0
+    lw      $t3, 0($t2)         #get the 4 bits associated with string in the node
+    lw      $t4, 4($t2)         #get the next 4 bits associated with pointer to the next node
     addi    $t5, $zero, 1       #$t5 gets 1 to compare
     addi    $t6, $zero, -1      #$t6 gets -1 to compare
     add     $t8, $zero, $zero   #get incrementer to check if the node is at the front of the list
@@ -262,10 +263,15 @@ alphloop:
     #lb     $t2, 0($a0)         #get the byte of the string 
     lw      $t4, 4($a0)         #get second 4bits in the node for pointer to next node
     la      $a0, 0($t4)         #move the address of the next node in to $t1 for next computation
-    beq     $a0, $zero, close   #close if next node == null 
     addi    $sp, $sp, 4         #deallocate the stack 
+    beq     $a0, $zero, close   #close if next node == null 
     addi    $t8, $t8, 1         #increment
     j       alphloop    
+front: 
+    sw      $s4, 0($v0)         #store the pointer to the new node (which in this case is front) to return 
+    lw      $ra, 0($sp)         #pop $ra off the stack
+    addi    $sp, $sp, 4         #deallocate
+    jr      $ra
 put: 
     lw      $t1, 0($sp)         #load $a0 off the stack into $t1
     addi    $sp, $sp, 4         #deallocate the stack
@@ -280,11 +286,6 @@ put:
     lw      $t3, 0($v0)         #get address word into $t3 for new node
     lb      $t1, 0($t1)         #get byte of conductor node's address
     sw      $t3, 4($t1)         #store the pointer to the address of next node into the 
-front: 
-    sw      $s4, 0($v0)         #store the pointer to the new node (which in this case is front) to return 
-    lw      $ra, 0($sp)         #pop $ra off the stack
-    addi    $sp, $sp, 4         #deallocate
-    jr      $ra
 close: 
     la      $v0, 0($t0)         #put front of the list into $v0
     lw      $ra, 0($sp)         #get $ra off stack
