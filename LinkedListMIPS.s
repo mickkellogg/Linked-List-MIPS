@@ -244,7 +244,7 @@ insert:
     la      $t1, 0($a1)         #get the address of the string to insert
     lb      $t2, 0($t0)         #get the byte at address in $a0
     beq     $s0, $zero, new     #if list is empty, put it at the front
-    lw      $t4, 4($t2)         #get the next 4 bits associated with pointer to the next node
+    addi    $t4, $t0, 4         #get the next 4 bits associated with pointer to the next node
     addi    $t5, $zero, 1       #$t5 gets 1 to compare
     addi    $t6, $zero, -1      #$t6 gets -1 to compare
     add     $t8, $zero, $zero   #get incrementer to check if the node is at the front of the list
@@ -255,15 +255,16 @@ alphloop:
     sw      $a0, 0($sp)         #store the front of the list on the stack 
     la      $a1, 0($a0)         #load address of string in node via the lw done in main
     la      $a0, 0($t1)         #get address of insert string
+    beq     $a1, $zero, put     #if pointer is null append at end and dont compare
     jal     strcmp              #jump to string compare
     beq     $v0, $t6, put       #if the string to compare > string in
     beq     $v0, $zero, close   #if they are the same, end the loop without insert
-    lw      $a0, 0($sp)         #get $a0 off the stack (address of last node)
+    la      $a0, 0($sp)         #get $a0 off the stack (address of last node)
     #lb     $t2, 0($a0)         #get the byte of the string 
     lw      $t4, 4($a0)         #get second 4bits in the node for pointer to next node
     la      $a0, 0($t4)         #move the address of the next node in to $t1 for next computation
     addi    $sp, $sp, 4         #deallocate the stack 
-    beq     $a0, $zero, close   #close if next node == null 
+    beq     $t4, $zero, close   #close if next node == null 
     addi    $t8, $t8, 1         #increment
     j       alphloop    
 front: 
@@ -321,7 +322,7 @@ Loop_print_list:
         jal        print_string
         jal        print_newline
         #lb         $t0, 0($s0)            # node = node->next
-        addi       $s0, $s0, 4
+        lw         $s0, 4($t0)
         bne        $s0, $zero, Loop_print_list
 Exit_print_list:
         lw         $s0, 4($sp)
