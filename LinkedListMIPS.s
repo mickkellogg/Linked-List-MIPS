@@ -227,6 +227,13 @@ plain_insert:
 	move $t1, $a1 # copy address of string
 	li   $a0, 8   # prep for malloc
 	jal  malloc
+	move $t2, $v0 # copy address of new node into t2
+	sw   $t1, 0($t2) # Copy address of string into ndoe
+	sw   $t0, 4($t2) # Copy address of Head
+	move $s0, $t2   # create new head
+	lw   $ra, 0($sp)
+	add  $sp, $sp, 4
+	jr   $ra   
 	
 	
 
@@ -329,7 +336,10 @@ print_list:
         sw         $ra, 0($sp)
         sw         $s0, 4($sp)
        # move      $s0, $a0
-        beq        $a0, $zero, Exit_print_list
+      #  beq        $a0, $zero, Exit_print_list
+        lw 	   $t0, 4($a0)
+        beq 	   $t0, $zero, Exit_print_list
+         
 Loop_print_list:
         la         $t0, 0($s0)
         la         $a0, 0($s0)
