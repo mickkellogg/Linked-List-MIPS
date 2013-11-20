@@ -240,10 +240,10 @@ insert_here:
 # Julian: When we load a word (4 bytes) from a0, I'm getting an error i think because they'res only one byte there (the zero from the null).
 # I've changed them all to LB's instead, but i'm not sure that's right. I'm still getting errors. See what you think?
 insert: 
-    la      $t0, 0($a0)         #get the address of the front of the list
-    beq     $a0, $zero, put     #if list is empty, put it at the front 
+    la      $t0, 0($a0)         #get the address of the front of the list 
     la      $t1, 0($a1)         #get the address of the string to insert
     lb      $t2, 0($t0)         #get the byte at address in $a0
+    beq     $t2, $zero, new     #if list is empty, put it at the front
     lw      $t3, 0($t2)         #get the 4 bits associated with string in the node
     lw      $t4, 4($t2)         #get the next 4 bits associated with pointer to the next node
     addi    $t5, $zero, 1       #$t5 gets 1 to compare
@@ -272,6 +272,21 @@ front:
     lw      $ra, 0($sp)         #pop $ra off the stack
     addi    $sp, $sp, 4         #deallocate
     jr      $ra
+new: 
+    addi    $sp, $sp, 4         #add to the stack for new value
+    sw      $ra, 0($sp)         #store $ra on stack
+    li      $t7, 8              #get 8 for byte init
+    move    $a0, $t7            #move $t7 into $a0
+    jal     malloc              #allocate the memory
+    move    $t7, $v0            #get memory address
+    lw      $t3, 0($a1)         #get word addressing for the new string
+    add     $t1, $zero, $zero   #$t1 gets zero    
+    sw      $t3, 0($t7)         #store the address for string into the first 4 bits of node
+    sw      $t1, 4($t7)         #store the address for string into the last 4 bits of node
+    move    $v0, $t7            #move $t7 to $v0
+    lw      $ra, 0($sp)         #get $ra back from the stack
+    addi    $sp, $sp, 4         #deallocate
+    jr      $ra 
 put: 
     lw      $t1, 0($sp)         #load $a0 off the stack into $t1
     addi    $sp, $sp, 4         #deallocate the stack
