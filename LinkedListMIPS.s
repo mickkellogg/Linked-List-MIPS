@@ -262,6 +262,7 @@ alphloop:
     #lb     $t2, 0($a0)         #get the byte of the string 
     lw      $t4, 4($a0)         #get second 4bits in the node for pointer to next node
     la      $a0, 0($t4)         #move the address of the next node in to $t1 for next computation
+    beq     $a0, $zero, close   #close if next node == null 
     addi    $sp, $sp, 4         #deallocate the stack 
     addi    $t8, $t8, 1         #increment
     j       alphloop    
@@ -285,7 +286,7 @@ front:
     addi    $sp, $sp, 4         #deallocate
     jr      $ra
 close: 
-    sw      $t0, 0($v0)         #put front of the list into $v0
+    la      $v0, 0($t0)         #put front of the list into $v0
     lw      $ra, 0($sp)         #get $ra off stack
     addi    $sp, $sp, 4         #deallocate the stack
     jr      $ra 
