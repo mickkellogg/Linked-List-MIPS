@@ -243,8 +243,7 @@ insert:
     la      $t0, 0($a0)         #get the address of the front of the list 
     la      $t1, 0($a1)         #get the address of the string to insert
     lb      $t2, 0($t0)         #get the byte at address in $a0
-    beq     $t2, $zero, new     #if list is empty, put it at the front
-    lw      $t3, 0($t2)         #get the 4 bits associated with string in the node
+    beq     $s0, $zero, new     #if list is empty, put it at the front
     lw      $t4, 4($t2)         #get the next 4 bits associated with pointer to the next node
     addi    $t5, $zero, 1       #$t5 gets 1 to compare
     addi    $t6, $zero, -1      #$t6 gets -1 to compare
@@ -311,16 +310,18 @@ close:
 # print_list: given address of front of list in $a0
 # prints each string in list, one per line, in order
 print_list:
-        addi    $sp, $sp, -8
-        sw      $ra, 0($sp)
-        sw      $s0, 4($sp)
-       # move    $s0, $a0
-        beq     $a0, $zero, Exit_print_list
+        add        $sp, $sp, -8
+        sw         $ra, 0($sp)
+        sw         $s0, 4($sp)
+       # move      $s0, $a0
+        beq        $a0, $zero, Exit_print_list
 Loop_print_list:
-      #  lw         $a0, 0($s0)
+        la         $t0, 0($s0)
+        la         $a0, 0($s0)
         jal        print_string
         jal        print_newline
-        lw         $s0, 4($s0) # node = node->next
+        #lb         $t0, 0($s0)            # node = node->next
+        addi       $s0, $s0, 4
         bne        $s0, $zero, Loop_print_list
 Exit_print_list:
         lw         $s0, 4($sp)
